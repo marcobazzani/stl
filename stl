@@ -4,10 +4,6 @@
 
 #CONFIGURE ME everything that you want to exclude from the diffs:
 if [[ $1 == "install" ]]; then
-    mkdir -p ~/bin
-#    echo "export PATH="\$PATH:\$HOME/bin"" >> ~/.bashrc
-#    source ~/.bashrc 
-#    curl  -Lo ~/bin/stl https://gist.github.com/visik7/9a3b403cd6183c9d2978/raw/a24f9f2bff4e1657a6ffb5641aad45a51eab88a5/stl
     chmod +x ~/bin/stl 
     cd ~/bin 
     rm -rf stl-*
@@ -19,17 +15,13 @@ if [[ $1 == "install" ]]; then
 fi
 
 exclusions=$(cat << EOF
-"staging"
-"*remote-compare.sh*"
 "installation/src"
 "installation/develop*"
 "installation/*eggs"
 "installation/bin"
 ".installed.cfg"
-"inventory"
 ".DS_Store"
 ".git"
-"*cf.json"
 "*.pyc"
 "*.pyo"
 "*.class"
@@ -46,37 +38,7 @@ me=`basename "$0"`
 
 if [[ $# -lt 2 ]]; then
     cat << EOF
-    # usage:
-    #
-    # stl (list all the files that has changes)
-    #
-    # stl-vim (for each of the differences a vimdiff will be performed) 
-    #
-    # stl-check (is a basic rsync which show what will change)
-    #
-    # stl-sync (effectively sync)
-
-    # examples:
-    #
-    # show only different files
-    #
-    # ./stl . 192.168.4.2:/home/centos/installation-scripts/
-    #
-    # execute vimdiff for each of the file which differs
-    #
-    # ./stl-vim . 192.168.4.2:/home/centos/installation-scripts/
-    #
-    # list everything which will be rsynced
-    #
-    # ./stl-check . 192.168.4.2:/home/centos/installation-scripts/
-    #
-    # do the real rsync
-    #
-    # ./stl-sync . 192.168.4.2:/home/centos/installation-scripts/
-    #
-    # trailing slash is relvant
-
-    #CONFIGURE ME everything that you want to exclude from the diffs:
+    usage $0 source destination (only one remote)    
 EOF
   exit 1
 fi
