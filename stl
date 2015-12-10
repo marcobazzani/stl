@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# Sync Tool (stl)
+#
+
+#CONFIGURE ME everything that you want to exclude from the diffs:
+if [[ $1 == "install" ]]; then
+    mkdir -p ~/bin
+#    echo "export PATH="\$PATH:\$HOME/bin"" >> ~/.bashrc
+#    source ~/.bashrc 
+#    curl  -Lo ~/bin/stl https://gist.github.com/visik7/9a3b403cd6183c9d2978/raw/a24f9f2bff4e1657a6ffb5641aad45a51eab88a5/stl
+    chmod +x ~/bin/stl 
+    cd ~/bin 
+    rm -rf stl-*
+    ln -s stl stl-vim 
+    ln -s stl stl-check 
+    ln -s stl stl-sync
+    ln -s stl stl-diff
+    exit 0
+fi
+
+exclusions=$(cat << EOF
+"staging"
+"*remote-compare.sh*"
+"installation/src"
+"installation/develop*"
+"installation/*eggs"
+"installation/bin"
+".installed.cfg"
+"inventory"
+".DS_Store"
+".git"
+"*cf.json"
+"*.pyc"
+"*.pyo"
+"*.class"
+"*.ear"
+"*.war"
+"target"
+".settings"
+".*"
+EOF
+)
+# END configuration part
+
+me=`basename "$0"`
+
+if [[ $# -lt 2 ]]; then
+    cat << EOF
+    # usage:
+    #
+    # stl (list all the files that has changes)
+    #
+    # stl-vim (for each of the differences a vimdiff will be performed) 
+    #
+    # stl-check (is a basic rsync which show what will change)
+    #
+    # stl-sync (effectively sync)
+
+    # examples:
+    #
+    # show only different files
+    #
+    # ./stl . 192.168.4.2:/home/centos/installation-scripts/
+    #
+    # execute vimdiff for each of the file which differs
+    #
+    # ./stl-vim . 192.168.4.2:/home/centos/installation-scripts/
+    #
+    # list everything which will be rsynced
+    #
+    # ./stl-check . 192.168.4.2:/home/centos/installation-scripts/
+    #
+    # do the real rsync
+    #
+    # ./stl-sync . 192.168.4.2:/home/centos/installation-scripts/
+    #
+    # trailing slash is relvant
+
+    #CONFIGURE ME everything that you want to exclude from the diffs:
+EOF
+  exit 1
+fi
+
+if [[ "$1" =~ ":" ]] &&  [[ "$2" =~ ":" ]] 
+then
+    echo "cannot operate with 2 remotes"
+    exit 1
+fi
+
+
+
+SOURCE=$1
+DESTINATION=$2
+
+if [[ "$SOURCE" =~ ":" ]]; then
+    REMOTE=$SOURCE
+fi
+
+if [[ "$DESTINATION" =~ ":" ]]; then
+    REMOTE=$DESTINATION
+fi
+
+
+if [[ $me == "stl-check" ]]; then
+    for a in $exclusions
+        do  
+            echo "$a"
+        done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n" 
+    exit 0
+fi
+
+if [[ $me == "stl-sync" ]]; then
+    for a in $exclusions
+        do  
+            echo "$a"
+        done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -avhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n" 
+    exit 0
+fi
+
+for a in $exclusions 
+do 
+    echo "$a"
+done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n"  |  while read line 
+    do
+      linesquid=$(echo ${line} | grep -v "+++++++" | grep -e '^<' -e '^>'  )
+      if [[ $? != 0 ]]; then
+          continue
+      fi
+      filepath=$(echo $linesquid | awk '{print $5}')
+      if [[ $me == "stl-vim" ]]; then
+          VIMDIFF_PATH=$(echo $REMOTE | awk -F ':' '{print "scp://"$1"/"$2}')
+          if [[ $DESTINATION == $REMOTE ]] ; then
+              test -f "$filepath" && vimdiff ${filepath} ${VIMDIFF_PATH}${filepath} < /dev/tty
+          else
+              test -f "$filepath" && vimdiff ${VIMDIFF_PATH}${filepath} ${filepath} < /dev/tty
+          fi
+
+      elif [[ $me == "stl-diff" ]]; then
+        HOST_PART=$(echo $REMOTE | awk -F ':' '{print $1}')
+        PATH_PART=$(echo $REMOTE | awk -F ':' '{print $2}')
+        if [[ $DESTINATION == $REMOTE ]] ; then
+            ssh $HOST_PART cat ${PATH_PART}${filepath} < /dev/tty | colordiff -u $filepath -
+        else
+            ssh $HOST_PART cat ${PATH_PART}${filepath} < /dev/tty | colordiff -u - $filepath
+        fi
+      else
+         test -f "$filepath" && echo ${line}
+      fi
+    done 
+
+
+
