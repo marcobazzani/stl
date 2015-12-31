@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sync Tool (stl)
+# Sync TooL (stl)
 #
 
 #CONFIGURE ME everything that you want to exclude from the diffs:
