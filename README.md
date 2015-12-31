@@ -7,9 +7,10 @@ grep, ssh, colordiff, rsync, vim (invoked with vimdiff)
 
 Install:
 
-1. download and copy into ~/bin
-
- 		2. sh -c ~/bin/stl
+1. cd ~/bin
+2. wget https://raw.githubusercontent.com/visik7/stl/master/stl
+3. chmod +x stl
+2. ./stl
 
 That's it
 
