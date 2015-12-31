@@ -2,7 +2,6 @@
 # Sync TooL (stl)
 #
 
-#CONFIGURE ME everything that you want to exclude from the diffs:
 if [[ $1 == "install" ]]; then
     chmod +x ~/bin/stl 
     cd ~/bin 
@@ -16,6 +15,7 @@ if [[ $1 == "install" ]]; then
     exit 0
 fi
 
+#CONFIGURE ME everything that you want to exclude from the diffs:
 exclusions=$(cat << EOF
 "installation/src"
 "installation/develop*"
