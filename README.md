@@ -10,7 +10,7 @@ Install:
 1. cd ~/bin
 2. wget https://raw.githubusercontent.com/visik7/stl/master/stl
 3. chmod +x stl
-2. ./stl
+2. ./stl install
 
 That's it
 
