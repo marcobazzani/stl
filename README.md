@@ -21,6 +21,10 @@ commands:
 
 	stl-sync (effectively sync)
 
+        stl-check-full (same as stl-check but without skipping configured patterns)
+        
+        stl-sync-full (same as stl-sync but without skipping configured patterns)
+        
 examples:
 
 show only different files
