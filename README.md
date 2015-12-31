@@ -1,6 +1,10 @@
 # stl
 A tool that use diff rsync vim and colordiff to allow a fine graded control over 2 directory on 2 different system to be kept in sync
 
+Requirements:
+
+grep, ssh, colordiff, rsync, vim (invoked with vimdiff)
+
 Install:
 
 1. download and copy into ~/bin
