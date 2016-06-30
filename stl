@@ -25,6 +25,7 @@ exclusions=$(cat << EOF
 "parts"
 ".installed.cfg"
 ".DS_Store"
+"*.iml"
 ".git"
 "*.pyc"
 "*.pyo"
@@ -40,14 +41,23 @@ EOF
 
 me=`basename "$0"`
 
-if [[ $# -lt 2 ]]; then
+if [[ $# -lt 2 ]] || [[ $me == "stl" ]]
+then
+    TOOLS=$(ls ~/bin/stl-*)
     cat << EOF
-    usage $0 source destination (only one remote)    
+    tools:
+${TOOLS}
+    usage $0 source destination (only one remote)
+    example:
+        $0 root@192.168.0.245:~/productionservice/ .
+        $0 . root@192.168.0.245:~/productionservice/
+
 EOF
   exit 1
 fi
 
-if [[ "$1" =~ ":" ]] &&  [[ "$2" =~ ":" ]] 
+
+if [[ "$1" =~ ":" ]] &&  [[ "$2" =~ ":" ]]
 then
     echo "cannot operate with 2 remotes"
     exit 1
@@ -66,36 +76,35 @@ if [[ "$DESTINATION" =~ ":" ]]; then
     REMOTE=$DESTINATION
 fi
 
-
 if [[ $me == "stl-check" ]]; then
     for a in $exclusions
-        do  
+        do
             echo "$a"
-        done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n" 
+        done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n" | grep -v "^\."
     exit 0
 fi
 
 if [[ $me == "stl-sync" ]]; then
     for a in $exclusions
-        do  
+        do
             echo "$a"
-        done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -avhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n" 
+        done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -avhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n"
     exit 0
 fi
 
 if [[ $me == "stl-check-full" ]]; then
-rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n" 
+rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n"  | grep -v "^\."
 fi
 
 if [[ $me == "stl-sync-full" ]]; then
-rsync -avhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n" 
+rsync -avhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n"
 fi
 
 
-for a in $exclusions 
-do 
+for a in $exclusions
+do
     echo "$a"
-done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n"  |  while read line 
+done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -navhz $SOURCE $DESTINATION --delete --no-perms --no-owner --no-group --checksum --out-format="%i %B %o %U %n"  |  while read line
     do
       linesquid=$(echo ${line} | grep -v "+++++++" | grep -e '^<' -e '^>'  )
       if [[ $? != 0 ]]; then
@@ -114,14 +123,12 @@ done | xargs -I{} echo "--exclude" \"{}\"  | xargs rsync -navhz $SOURCE $DESTINA
         HOST_PART=$(echo $REMOTE | awk -F ':' '{print $1}')
         PATH_PART=$(echo $REMOTE | awk -F ':' '{print $2}')
         if [[ $DESTINATION == $REMOTE ]] ; then
-            ssh $HOST_PART cat ${PATH_PART}${filepath} < /dev/tty | colordiff -u $filepath -
-        else
             ssh $HOST_PART cat ${PATH_PART}${filepath} < /dev/tty | colordiff -u - $filepath
+        else
+            ssh $HOST_PART cat ${PATH_PART}${filepath} < /dev/tty | colordiff -u $filepath -
         fi
       else
          test -f "$filepath" && echo ${line}
       fi
-    done 
-
-
+    done
 
